@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futuristic Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-purple: #bc13fe;
+            --bg-dark: #0a0b10;
+            --glass: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background: radial-gradient(circle at center, #1a1a2e 0%, #0a0b10 100%);
+            color: white;
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        h1, h2 { font-family: 'Orbitron', sans-serif; text-transform: uppercase; letter-spacing: 2px; }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.1);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px dashed var(--neon-blue);
+            border-radius: 10px;
+        }
+
+        input {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--neon-blue);
+            padding: 12px;
+            color: white;
+            border-radius: 5px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus { box-shadow: 0 0 10px var(--neon-blue); }
+
+        button {
+            cursor: pointer;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+            border: none;
+            padding: 12px 25px;
+            color: white;
+            font-weight: bold;
+            border-radius: 5px;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        button:hover { transform: scale(1.05); filter: brightness(1.2); }
+
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .user-table th {
+            text-align: left;
+            border-bottom: 2px solid var(--neon-purple);
+            padding: 10px;
+            color: var(--neon-blue);
+        }
+
+        .user-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-delete { background: #ff4d4d; margin-left: 5px; }
+        .btn-edit { background: #ffaa00; }
+
+        /* Estilo para simular o JSON */
+        .json-info {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>System <span style="color: var(--neon-blue);">Core</span></h1>
+    <p class="json-info">Gerenciador de Acessos // Destino: user/listaUsers.json (Simulado via LocalStorage)</p>
+
+    <div class="form-grid">
+        <input type="hidden" id="edit-index">
+        <input type="text" id="nome" placeholder="Nome">
+        <input type="text" id="senha" placeholder="Senha">
+        <input type="text" id="nomeUrl" placeholder="Nome da URL">
+        <input type="text" id="senhaUrl" placeholder="Senha da URL">
+        <input type="text" id="url" placeholder="URL (https://...)">
+        <button onclick="saveUser()" id="btn-save">Adicionar Usuário</button>
+    </div>
+
+    <h2>Usuários Ativos</h2>
+    <table class="user-table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>URL</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="user-list">
+            </tbody>
+    </table>
+</div>
+
+<script>
+    let users = JSON.parse(localStorage.getItem('listaUsers')) || [];
+
+    function renderList() {
+        const listElement = document.getElementById('user-list');
+        listElement.innerHTML = '';
+
+        users.forEach((user, index) => {
+            listElement.innerHTML += `
+                <tr>
+                    <td>${user.Nome}</td>
+                    <td><a href="${user.Url}" target="_blank" style="color: var(--neon-blue)">${user.NomeUrl}</a></td>
+                    <td>
+                        <button class="btn-edit" onclick="prepareEdit(${index})">Editar</button>
+                        <button class="btn-delete" onclick="deleteUser(${index})">Deletar</button>
+                    </td>
+                </tr>
+            `;
+        });
+        localStorage.setItem('listaUsers', JSON.stringify(users));
+    }
+
+    function saveUser() {
+        const nome = document.getElementById('nome').value;
+        const senha = document.getElementById('senha').value;
+        const nomeUrl = document.getElementById('nomeUrl').value;
+        const senhaUrl = document.getElementById('senhaUrl').value;
+        const url = document.getElementById('url').value;
+        const editIndex = document.getElementById('edit-index').value;
+
+        if(!nome || !url) return alert("Preencha ao menos Nome e URL");
+
+        const userData = { Nome: nome, Senha: senha, NomeUrl: nomeUrl, SenhaURL: senhaUrl, Url: url };
+
+        if(editIndex === "") {
+            users.push(userData);
+        } else {
+            users[editIndex] = userData;
+            document.getElementById('edit-index').value = "";
+            document.getElementById('btn-save').innerText = "Adicionar Usuário";
+        }
+
+        clearInputs();
+        renderList();
+    }
+
+    function deleteUser(index) {
+        if(confirm("Deseja apagar este registro?")) {
+            users.splice(index, 1);
+            renderList();
+        }
+    }
+
+    function prepareEdit(index) {
+        const user = users[index];
+        document.getElementById('nome').value = user.Nome;
+        document.getElementById('senha').value = user.Senha;
+        document.getElementById('nomeUrl').value = user.NomeUrl;
+        document.getElementById('senhaUrl').value = user.SenhaURL;
+        document.getElementById('url').value = user.Url;
+        document.getElementById('edit-index').value = index;
+        document.getElementById('btn-save').innerText = "Atualizar Dados";
+    }
+
+    function clearInputs() {
+        ['nome', 'senha', 'nomeUrl', 'senhaUrl', 'url'].forEach(id => document.getElementById(id).value = '');
+    }
+
+    // Inicializa a lista
+    renderList();
+</script>
+
+</body>
+</html>
